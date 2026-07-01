@@ -4,6 +4,9 @@
 #include "Arduino.h"
 ///////////////////////////////////////////////////////////
 // PURPOSE:
+// - Functions used to create the paquets of the protocol
+// - Must have your own buffer to fill up.
+// - Transform strings into packets
 ///////////////////////////////////////////////////////////
 
 namespace packetsInterface {

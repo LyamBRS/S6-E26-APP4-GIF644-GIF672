@@ -47,6 +47,13 @@ static void manageQueue()
   }
 }
 
+static void storePacket(unsigned char* packet, size_t size)
+{
+  packets[packetCount] = packet;
+  packetSizes[packetCount] = size;
+  packetCount++;
+}
+
 //=========================================================
 // Public definitions
 //=========================================================
@@ -104,6 +111,29 @@ namespace txPacketsProcess
     return 0;
   }
 
+  int sendRetry(unsigned char sequenceNumber)
+  {
+    if (transmitting) {
+      return ERR_BUSY;
+    }
+    transmitting = true;
+    aborted = false;
+
+    unsigned char* packet = new unsigned char[9];
+    if (!packet) return ERR_OUT_OF_MEMORY;
+
+    int result = packetsInterface::createRetryPacket(packet, sequenceNumber);
+    if (result != 0)
+    {
+      delete[] packet;
+      transmitting = false;
+      Serial.printf("ERR: txPacketsProcess: sendRetry: createRetryPacket: %i\n", result);
+      return result;
+    }
+
+    storePacket(packet, 9);
+  }
+
   int send(const String& input)
   {
     if (transmitting) {
@@ -126,18 +156,7 @@ namespace txPacketsProcess
     packetSizes = new size_t[MAX_PACKETS_ESTIMATE];
     packetCount = 0;
     txIndex = 0;
-
     unsigned char sequenceNumber = 0;
-
-    //--------------------------------------------------
-    // Helper: store packet
-    //--------------------------------------------------
-    auto storePacket = [&](unsigned char* packet, size_t size)
-    {
-        packets[packetCount] = packet;
-        packetSizes[packetCount] = size;
-        packetCount++;
-    };
 
     //--------------------------------------------------
     // START PACKET

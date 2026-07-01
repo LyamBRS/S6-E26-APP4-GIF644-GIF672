@@ -39,6 +39,9 @@ namespace txPacketsProcess {
   // String to send as soon as possible.
   int send(const String& input);
 
+  // Allow you to retry a sending
+  int sendRetry(unsigned char sequenceNumber);
+
   // Retry from packet x.
   int retry(unsigned char packetIndex);
 
