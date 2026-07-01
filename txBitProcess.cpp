@@ -21,7 +21,6 @@ static void processBits(void)
   if (xQueueReceive(bitQueue, &bit, portMAX_DELAY) == pdPASS)
   {
     digitalWrite(txPin, bit);
-    Serial.print(bit);
   }
 }
 

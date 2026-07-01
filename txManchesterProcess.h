@@ -1,38 +1,41 @@
-#ifndef TX_BIT_PROCESS_H
-#define TX_BIT_PROCESS_H
+#ifndef TX_MANCHESTER_PROCESS_H
+#define TX_MANCHESTER_PROCESS_H
 
 ///////////////////////////////////////////////////////////
 // PURPOSE:
-// - Manage a queue of bits to send on a specified GPIO
-// - Set the GPIO every task period
-// - Work with every protocols that need to schedule bits
+// - Manage a queue of byte into a queue of Manchester bits
+// - Send a packet as Manchester encoding
+// - Utilize TX services to append the bits to send.
+// - 1 packet at a time.
 ///////////////////////////////////////////////////////////
 
-namespace txBitProcess {
+namespace txManchesterProcess {
 
   //=======================================================
   // Public definitions
   //=======================================================
   #define ERR_NULL_QUEUE -1
   #define ERR_NULL_SEMAPHORE -2
-  #define ERR_AMOUNT_TOO_HIGH -3
-  #define ERR_QUEUE_FULL -4
+  #define ERR_BUSY -3
+  #define ERR_BUFFER_OVERFLOW -4
 
-  #define PROCESS_TICK 10
+  #define PROCESS_TICK 100
 
   //=======================================================
   // Public functions
   //=======================================================
-  int initialize(unsigned char buffer_size, int tx_pin);
 
-  // Add an amount of bits to send as soon as possible.
-  int append(unsigned char bits, unsigned char amount);
+  // Initialize with maximum packet size.
+  int initialize(unsigned char bufferSizeBytes);
+
+  // Add bytes to send as soon as possible.
+  int set(const unsigned char* packet, unsigned char byteCount);
 
   // How many more bits fit in the RX buffer?
   int getRemainingSpace(void);
 
   // Stop everything you're currently doing.
-  int clearBuffer(void);
+  int reset(void);
   
   // RTOS task loop
   void handle(void *pv);
