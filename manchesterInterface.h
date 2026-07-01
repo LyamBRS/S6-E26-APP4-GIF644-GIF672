@@ -12,9 +12,9 @@ namespace manchesterInterface {
   //=======================================================
   // Public definitions
   //=======================================================
-  #define ERR_TOO_BIG -1
-  #define ERR_PARAMETERS_NULL -2
-  #define ERR_INVALID_MANCHESTER -3
+  constexpr int ERR_TOO_BIG = -1;
+  constexpr int ERR_PARAMETERS_NULL = -2;
+  constexpr int ERR_INVALID_MANCHESTER = -3;
 
   //=======================================================
   // Public functions

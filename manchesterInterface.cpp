@@ -63,42 +63,31 @@ namespace manchesterInterface
 
   int toUnsignedChar(unsigned char low, unsigned char high, unsigned char* result)
   {
-    if (!result)
-    {
-      return ERR_PARAMETERS_NULL;
-    }
-
+    if (!result) { return ERR_PARAMETERS_NULL; }
     unsigned char output = 0;
-
     for (int i = 0; i < 8; i++)
     {
       int outIndex = i * 2;
       unsigned char manLow, manHigh;
-
       if (outIndex < 8)
       {
-        manLow  = (low >> (7 - outIndex)) & 0x01;
-        manHigh = (low >> (7 - outIndex - 1)) & 0x01;
+        manLow  = (high >> (7 - outIndex)) & 0x01;
+        manHigh = (high >> (7 - outIndex - 1)) & 0x01;
       }
       else
       {
         int shift = 15 - outIndex;
-        manLow  = (high >> shift) & 0x01;
-        manHigh = (high >> (shift - 1)) & 0x01;
+        manLow  = (low >> shift) & 0x01;
+        manHigh = (low >> (shift - 1)) & 0x01;
       }
 
-      // decode Manchester pair
       unsigned char bit;
-      if (manLow == 0 && manHigh == 1)
-        bit = 0;
-      else if (manLow == 1 && manHigh == 0)
-        bit = 1;
-      else
-        return ERR_INVALID_MANCHESTER; // invalid
+      if (manLow == 0 && manHigh == 1) bit = 0;
+      else if (manLow == 1 && manHigh == 0) bit = 1;
+      else return ERR_INVALID_MANCHESTER;
 
       output |= (bit << (7 - i));
     }
-
     *result = output;
     return 0;
   }

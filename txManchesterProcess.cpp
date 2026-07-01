@@ -8,8 +8,9 @@
 //=========================================================
 static QueueHandle_t txQueue;
 static SemaphoreHandle_t readySemaphore = nullptr;
-static SemaphoreHandle_t txLock = nullptr;
+//static SemaphoreHandle_t txLock = nullptr;
 static volatile bool aborted = false;
+static bool txLock = false;
 
 //=========================================================
 // Private function
@@ -18,8 +19,14 @@ void manageQueue()
 {
   unsigned char  byte;
   while (txBitProcess::getRemainingSpace() >= 16) {
+    if (uxQueueMessagesWaiting(txQueue) == 0)
+    {
+      txLock = false;
+    }
+
     if (xQueueReceive(txQueue, &byte, portMAX_DELAY) == pdPASS)
     {
+      Serial.printf("Queuing -> 0x%02X\n", byte);
       unsigned char high = 0;
       unsigned char low = 0;
       int result = manchesterInterface::fromUnsignedChar(byte, &low, &high);
@@ -36,13 +43,14 @@ void manageQueue()
         Serial.printf("ERR: txManchesterProcess.cpp: txBitProcess::append: %i", result);
       }
 
-      vTaskDelay(pdMS_TO_TICKS(1));
+      vTaskDelay(pdMS_TO_TICKS(10));
     }
     else
     {
       // queue empty → finished
       Serial.println("queue finished");
-      xSemaphoreGive(txLock);
+      //xSemaphoreGive(txLock);
+      txLock = false;
       return;
     }
   }
@@ -69,15 +77,16 @@ namespace txManchesterProcess
       return ERR_NULL_SEMAPHORE;
     }
 
-    txLock = xSemaphoreCreateMutex();
-    if (txLock == nullptr)
-    {
-      return ERR_NULL_SEMAPHORE;
-    }
+    //txLock = xSemaphoreCreateMutex();
+    //if (txLock == nullptr)
+    //{
+    //  return ERR_NULL_SEMAPHORE;
+    //}
+    txLock = false;
 
     // signal ready once
     xSemaphoreGive(readySemaphore);
-    xSemaphoreGive(txLock);
+    //xSemaphoreGive(txLock);
 
     return 0;
   }
@@ -85,10 +94,14 @@ namespace txManchesterProcess
   int set(const unsigned char* packet, unsigned char byteCount)
   {
     // - Data can't be appended until whole packet is sent.
-    if (xSemaphoreTake(txLock, 0) != pdTRUE)
-    {
+    //if (xSemaphoreTake(txLock, 0) != pdTRUE)
+    //{
+    //  return ERR_BUSY;
+    //}
+    if (txLock) {
       return ERR_BUSY;
     }
+    txLock = true;
 
     // - Previous queue clearing
     xQueueReset(txQueue);
@@ -99,13 +112,13 @@ namespace txManchesterProcess
     {
       if (xQueueSend(txQueue, &packet[i], 0) != pdPASS)
       {
-        xSemaphoreGive(txLock);
+        txLock = false;
         return ERR_BUFFER_OVERFLOW;
       }
     }
 
     // - Process can now run
-    xSemaphoreGive(txLock);
+    //xSemaphoreGive(txLock);
 
     return 0;
   }

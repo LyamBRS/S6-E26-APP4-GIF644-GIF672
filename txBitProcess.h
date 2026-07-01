@@ -13,12 +13,12 @@ namespace txBitProcess {
   //=======================================================
   // Public definitions
   //=======================================================
-  #define ERR_NULL_QUEUE -1
-  #define ERR_NULL_SEMAPHORE -2
-  #define ERR_AMOUNT_TOO_HIGH -3
-  #define ERR_QUEUE_FULL -4
+  constexpr int ERR_NULL_QUEUE = -1;
+  constexpr int ERR_NULL_SEMAPHORE = -2;
+  constexpr int ERR_AMOUNT_TOO_HIGH = -3;
+  constexpr int ERR_QUEUE_FULL = -4;
 
-  #define PROCESS_TICK 10
+  constexpr int PROCESS_TICK = 10;
 
   //=======================================================
   // Public functions

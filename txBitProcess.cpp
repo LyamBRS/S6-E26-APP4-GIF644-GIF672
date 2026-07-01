@@ -1,4 +1,5 @@
 #include "txBitProcess.h"
+#include "manchesterInterface.h"
 #include "Arduino.h"
 
 //=========================================================
@@ -12,6 +13,8 @@ static int txPin = -1;
 //=========================================================
 // Private function
 //=========================================================
+static int count = 0;
+static bool arr[16] = {0};
 
 static void processBits(void)
 {
@@ -21,6 +24,37 @@ static void processBits(void)
   if (xQueueReceive(bitQueue, &bit, portMAX_DELAY) == pdPASS)
   {
     digitalWrite(txPin, bit);
+    //Serial.print(bit);
+    //arr[count] = bit;
+    //count++;
+//
+    //if (count >= 16) {
+    //  count = 0;
+//
+    //  unsigned char low = 0;
+    //  unsigned char high = 0;
+//
+    //  for (int i = 0; i < 8; i++) {
+    //    if (arr[i]) {
+    //      low |= (1 << i);
+    //    }
+    //  }
+//
+    //  for (int i = 0; i < 8; i++) {
+    //    if (arr[i + 8]) {
+    //      high |= (1 << i);
+    //    }
+    //  }
+//
+    //  unsigned char decoded = 0;
+    //  int result = manchesterInterface::toUnsignedChar(low, high, &decoded);
+    //  if (result != 0)
+    //  {
+    //    Serial.printf("ERR: Manchester: %i\n", result);
+    //    return;
+    //  }
+    //  Serial.printf(" -> 0x%02X\n", decoded);
+    //}
   }
 }
 
