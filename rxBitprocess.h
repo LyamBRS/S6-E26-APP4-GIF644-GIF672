@@ -14,8 +14,10 @@ namespace rxBitProcess {
 	//=======================================================
 	constexpr int ERR_NULL_SEMAPHORE = -1;
 	constexpr int ERR_INVALID_PIN = -2;
+	constexpr int ERR_NULL_QUEUE = -3;
 
-	constexpr int PROCESS_SPEED_US = 50;
+	constexpr unsigned long EDGE_CHANGE_THRESHOLD_US = 150;
+	constexpr unsigned long EDGE_QUEUE_SIZE = 32;
 
 	//=======================================================
 	// Public functions
