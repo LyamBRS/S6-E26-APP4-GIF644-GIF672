@@ -35,7 +35,7 @@ namespace txService
   int state_awaitSensors(void)
   {
     // TODO: READY LOGIC
-    sensorData = sensorService::get();
+    sensorData = sensorService::getAll();
     currentState = state_queueTransmission;
     return 0;
   }
@@ -48,17 +48,18 @@ namespace txService
       Serial.printf("ERR: txService: state_queueTransmission: txPacketsProcess::send: %i\n", result);
       return result;
     }
-    currentState == state_awaitTransmissionEnd;
+    currentState = state_awaitTransmissionEnd;
     return 0;
   }
 
   int state_awaitTransmissionEnd(void)
   {
-    if(txPacketsProcess::ready())
+    if (txPacketsProcess::ready())
     {
       currentState = state_awaitTransmissionACK;
-      return 0;
     }
+
+    return 0;
   }
 
   int state_awaitTransmissionACK(void)
@@ -78,6 +79,8 @@ namespace txService
       Serial.printf("ERR: txService: state_queueTransmission: txPacketsProcess::send: %i\n", result);
       return result;
     }
+
+    return 0;
   }
 
   void handle(void *pv)

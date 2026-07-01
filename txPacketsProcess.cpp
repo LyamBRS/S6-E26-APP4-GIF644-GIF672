@@ -132,6 +132,7 @@ namespace txPacketsProcess
     }
 
     storePacket(packet, 9);
+    return 0;
   }
 
   int send(const String& input)
@@ -230,6 +231,11 @@ namespace txPacketsProcess
 
 
     return 0;
+  }
+
+  bool ready(void)
+  {
+    return !transmitting;
   }
 
   int retry(unsigned char packetIndex)

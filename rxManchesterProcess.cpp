@@ -2,12 +2,18 @@
 #include "rxManchesterProcess.h"
 #include "rxPacketsProcess.h"
 #include "manchesterInterface.h"
+#include "packetsInterface.h"
 
 //=========================================================
 // Private variables
 //=========================================================
 static QueueHandle_t bitQueue = nullptr;
 static SemaphoreHandle_t readySemaphore = nullptr;
+
+static bool synced = false;
+static unsigned char syncLow = 0;
+static unsigned char syncHigh = 0;
+static unsigned char syncBitCount = 0;
 
 //=========================================================
 // Private function
@@ -22,6 +28,45 @@ static void processBits(void)
 
   if (xQueueReceive(bitQueue, &bit, portMAX_DELAY) == pdPASS)
   {
+    if (!synced)
+    {
+      if (syncBitCount < 8)
+      {
+        syncHigh = (unsigned char)((syncHigh << 1) | (bit ? 1 : 0));
+      }
+      else
+      {
+        syncLow = (unsigned char)((syncLow << 1) | (bit ? 1 : 0));
+      }
+
+      syncBitCount++;
+
+      if (syncBitCount == 16)
+      {
+        unsigned char decoded = 0;
+        int result = manchesterInterface::toUnsignedChar(syncLow, syncHigh, &decoded);
+        if (result == 0 && decoded == packetsInterface::BYTE_SYNC)
+        {
+          result = rxPacketsProcess::append(decoded);
+          if (result != 0 && result != rxPacketsProcess::ERR_QUEUE_FULL)
+          {
+            Serial.printf("ERR: rxManchesterProcess::processBits: rxPacketsProcess::append(sync): %i\n", result);
+          }
+
+          synced = true;
+          low = 0;
+          high = 0;
+          bitCount = 0;
+        }
+
+        syncLow = 0;
+        syncHigh = 0;
+        syncBitCount = 0;
+      }
+
+      return;
+    }
+
     if (bitCount < 8)
     {
       low = (unsigned char)((low << 1) | (bit ? 1 : 0));
@@ -70,6 +115,11 @@ namespace rxManchesterProcess
     {
       return ERR_NULL_QUEUE;
     }
+
+    synced = false;
+    syncLow = 0;
+    syncHigh = 0;
+    syncBitCount = 0;
 
     readySemaphore = xSemaphoreCreateBinary();
     if (readySemaphore == nullptr)

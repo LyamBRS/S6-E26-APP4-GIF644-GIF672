@@ -1,3 +1,5 @@
+#include "rxService.h"
+#include "rxPacketsProcess.h"
 #include "txBitProcess.h"
 #include "txManchesterProcess.h"
 #include "manchesterInterface.h"
@@ -14,6 +16,7 @@
 TaskHandle_t txBitProcess_TaskHandle = nullptr;
 TaskHandle_t txManchesterProcess_TaskHandle = nullptr;
 TaskHandle_t txPacketsProcess_TaskHandle = nullptr;
+TaskHandle_t rxService_TaskHandle = nullptr;
 
 //=========================================================
 // Private variables
@@ -49,6 +52,12 @@ void setup() {
     return;
   }
 
+  result = rxService::initialize(4);
+  if (result != 0) {
+    Serial.printf("ERR: setup(): rxService::initialize: %i", result);
+    return;
+  }
+
   //-------------------------------------------------------
   // Tasks start
   //-------------------------------------------------------
@@ -79,6 +88,15 @@ void setup() {
     &txPacketsProcess_TaskHandle
   );
 
+  xTaskCreate(
+    rxService::handle,
+    "rxService",
+    4096,
+    nullptr,
+    2,
+    &rxService_TaskHandle
+  );
+
   //-------------------------------------------------------
   // Pre loop setup
   //-------------------------------------------------------
@@ -95,5 +113,26 @@ void setup() {
 }
 
 void loop() {
+
+  if (rxService::available()) {
+    unsigned char message[rxService::MAX_MESSAGE_SIZE] = {0};
+    unsigned short messageSize = 0;
+
+    int result = rxService::read(message, &messageSize);
+    if (result == 0) {
+      Serial.printf("RX message (%u bytes): ", messageSize);
+      for (unsigned short i = 0; i < messageSize; i++) {
+        Serial.write(message[i]);
+      }
+      Serial.println();
+    }
+  }
+
+  if (rxService::retryRequested()) {
+    unsigned char retryIndex = 0;
+    if (rxService::readRetryRequest(&retryIndex) == 0) {
+      Serial.printf("RX retry requested from packet index: %u\n", retryIndex);
+    }
+  }
 
 }
