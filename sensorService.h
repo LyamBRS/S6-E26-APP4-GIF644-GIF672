@@ -13,6 +13,8 @@ namespace sensorService {
   //=======================================================
   // Public definitions
   //=======================================================
+  constexpr int ERR_NULL_SEMAPHORE = -1;
+
   constexpr int PROCESS_TICK = 100;
 
   //=======================================================

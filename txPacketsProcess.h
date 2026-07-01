@@ -47,6 +47,9 @@ namespace txPacketsProcess {
 
   // Stop everything you're currently doing. Clear everything.
   int reset(void);
+
+  // Yo, is it free for more data?
+  bool ready(void);
   
   // RTOS task loop
   void handle(void *pv);

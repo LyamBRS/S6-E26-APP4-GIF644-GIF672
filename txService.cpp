@@ -35,7 +35,7 @@ namespace txService
   int state_awaitSensors(void)
   {
     // TODO: READY LOGIC
-    sensorData = sensorService::get();
+    sensorData = sensorService::getAll();
     currentState = state_queueTransmission;
     return 0;
   }

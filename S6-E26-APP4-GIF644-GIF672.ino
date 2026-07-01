@@ -2,6 +2,9 @@
 #include "txManchesterProcess.h"
 #include "manchesterInterface.h"
 #include "txPacketsProcess.h"
+#include "sensorService.h"
+#include "txService.h"
+
 //=========================================================
 // Program definitions
 //=========================================================
@@ -14,6 +17,8 @@
 TaskHandle_t txBitProcess_TaskHandle = nullptr;
 TaskHandle_t txManchesterProcess_TaskHandle = nullptr;
 TaskHandle_t txPacketsProcess_TaskHandle = nullptr;
+TaskHandle_t sensorService_TaskHandle = nullptr;
+TaskHandle_t txService_TaskHandle = nullptr;
 
 //=========================================================
 // Private variables
@@ -49,34 +54,69 @@ void setup() {
     return;
   }
 
+  result = txService::initialize();
+  if (result != 0) {
+    Serial.printf("ERR: setup(): txService::initialize: %i", result);
+    return;
+  }
+
+  result = sensorService::initialize();
+  if (result != 0) {
+    Serial.printf("ERR: setup(): sensorService::initialize: %i", result);
+    return;
+  }
+
   //-------------------------------------------------------
   // Tasks start
   //-------------------------------------------------------
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
     txBitProcess::handle,
     "txBitProcess",
     4096,
     nullptr,
     1,
-    &txBitProcess_TaskHandle
+    &txBitProcess_TaskHandle,
+    0
   );
 
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
     txManchesterProcess::handle,
     "txManchesterProcess",
     4096,
     nullptr,
     2,
-    &txManchesterProcess_TaskHandle
+    &txManchesterProcess_TaskHandle,
+    1
   );
 
-  xTaskCreate(
+  xTaskCreatePinnedToCore(
     txPacketsProcess::handle,
     "txPacketsProcess",
     4096,
     nullptr,
     3,
-    &txPacketsProcess_TaskHandle
+    &txPacketsProcess_TaskHandle,
+    1
+  );
+
+  xTaskCreatePinnedToCore(
+    txService::handle,
+    "txService",
+    4096,
+    nullptr,
+    4,
+    &sensorService_TaskHandle,
+    1
+  );
+
+  xTaskCreatePinnedToCore(
+    sensorService::handle,
+    "sensorData",
+    4096,
+    nullptr,
+    3,
+    &txService_TaskHandle,
+    1
   );
 
   //-------------------------------------------------------
@@ -84,14 +124,7 @@ void setup() {
   //-------------------------------------------------------
   Serial.println("Initialization finished");
 
-  delay(2000);
-  //String test = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ aaaaaaaaaaaaaaaaaaaaaaaa";
-  String test = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
-  
-  result = txPacketsProcess::send(test);
-  if (result != 0) {
-    Serial.printf("ERR: setup(): txPacketsProcess::set: %i", result);
-  }
+  delay(1000);
 }
 
 void loop() {

@@ -111,6 +111,11 @@ namespace txPacketsProcess
     return 0;
   }
 
+  bool ready(void)
+  {
+    return !transmitting;
+  }
+
   int sendRetry(unsigned char sequenceNumber)
   {
     if (transmitting) {
