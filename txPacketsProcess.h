@@ -28,25 +28,6 @@ namespace txPacketsProcess {
   constexpr int ERR_NOT_TRANSMITTING = -10;
 
   constexpr int PROCESS_TICK = 10;
-  constexpr int MAX_FULL_PACKET_SIZE = 89;
-  constexpr int MAX_DATA_PACKET_SIZE = 80;
-
-  // constexpr int BYTE_SYNC = 0x55;
-  // constexpr int BYTE_START = 0x7E;
-  // constexpr int BYTE_END = 0x7E;
-  // constexpr int BYTE_TYPE_START = 0x01;
-  // constexpr int BYTE_TYPE_DATA = 0x02;
-  // constexpr int BYTE_TYPE_END = 0x03;
-  // constexpr int BYTE_TYPE_NACK = 0x04;
-  // constexpr int CRC_SIZE = 16;
-  constexpr int BYTE_SYNC = 0xFF;
-  constexpr int BYTE_START = 0xFF;
-  constexpr int BYTE_END = 0x55;
-  constexpr int BYTE_TYPE_START = 0xFF;
-  constexpr int BYTE_TYPE_DATA = 0xFF;
-  constexpr int BYTE_TYPE_END = 0xFF;
-  constexpr int BYTE_TYPE_NACK = 0xFF;
-  constexpr int CRC_SIZE = 16;
 
   //=======================================================
   // Public functions

@@ -1,5 +1,6 @@
 #include "txPacketsProcess.h"
 #include "txManchesterProcess.h"
+#include "packetsInterface.h"
 #include <Arduino.h>
 
 //=========================================================
@@ -44,181 +45,6 @@ static void manageQueue()
     }
     vTaskDelay(pdMS_TO_TICKS(1));
   }
-}
-
-static int calculatePacketCRC(unsigned char* packet, unsigned char packetSize, unsigned char* crcLow, unsigned char* crcHigh)
-{
-  if (packet == nullptr || crcLow == nullptr || crcHigh == nullptr)
-  {
-    return txPacketsProcess::ERR_PARAMETERS_NULL;
-  }
-
-  Serial.println("A packet is created");
-
-  unsigned short crc = 0xFFFF;
-
-  for (unsigned char i = 0; i < packetSize; i++)
-  {
-    crc ^= packet[i];
-
-    for (unsigned char b = 0; b < 8; b++)
-    {
-      if (crc & 0x0001)
-      {
-        crc = (crc >> 1) ^ 0xA001;
-      }
-      else
-      {
-        crc >>= 1;
-      }
-    }
-  }
-
-  //*crcLow  = (unsigned char)(crc & 0xFF);
-  //*crcHigh = (unsigned char)((crc >> 8) & 0xFF);
-  *crcLow = 0xFF;
-  *crcHigh = 0xFF;
-
-  return 0;
-}
-
-static int createStartPacket(unsigned char* packet, unsigned char totalPacketAmount)
-{
-  //--------------------------------------------------
-  // Header
-  //--------------------------------------------------
-  packet[0] = txPacketsProcess::BYTE_SYNC;
-  packet[1] = txPacketsProcess::BYTE_START;
-  packet[2] = txPacketsProcess::BYTE_TYPE_START;
-  //packet[3] = 0x00;
-  //packet[4] = 0x00;
-  packet[3] = 0xFF;
-  packet[4] = 0xFF;
-  packet[5] = 0xFF;//totalPacketAmount;
-
-  //--------------------------------------------------
-  // CRC
-  //--------------------------------------------------
-  unsigned char crcLow = 0;
-  unsigned char crcHigh = 0;
-  int result = calculatePacketCRC(packet, 5, &crcLow, &crcHigh);
-  if (result != 0) {
-    Serial.printf("ERR: txPacketsProcess: createStartPacket: calculatePacketCRC: %i", result);
-    return result;
-  }
-
-  packet[6] = crcHigh;
-  packet[7] = crcLow;
-
-  //--------------------------------------------------
-  // END sequencee
-  //--------------------------------------------------
-  packet[8] = txPacketsProcess::BYTE_END;
-  return 0;
-}
-
-static int createEndPacket(unsigned char* packet, unsigned char sequenceNumber)
-{
-  if (packet == nullptr)
-  {
-    return txPacketsProcess::ERR_PARAMETERS_NULL;
-  }
-
-  //--------------------------------------------------
-  // Header
-  //--------------------------------------------------
-  packet[0] = txPacketsProcess::BYTE_SYNC;
-  packet[1] = txPacketsProcess::BYTE_START;
-  packet[2] = txPacketsProcess::BYTE_TYPE_END;
-  packet[3] = 0xFF;//sequenceNumber;
-  //packet[4] = 0x00;
-  //packet[5] = 0x00;
-  packet[4] = 0xFF;
-  packet[5] = 0xFF;
-
-  //--------------------------------------------------
-  // CRC
-  //--------------------------------------------------
-  unsigned char crcLow = 0;
-  unsigned char crcHigh = 0;
-  int result = calculatePacketCRC(packet, 5, &crcLow, &crcHigh);
-  if (result != 0) {
-    Serial.printf("ERR: txPacketsProcess: createEndPacket: calculatePacketCRC: %i", result);
-    return result;
-  }
-  packet[6] = crcHigh;
-  packet[7] = crcLow;
-
-  //--------------------------------------------------
-  // END sequencee
-  //--------------------------------------------------
-  packet[8] = txPacketsProcess::BYTE_END;
-  return 0;
-}
-
-static int createDataPacket(unsigned char* packet, unsigned char* packetSize, String &data, unsigned char sequenceNumber)
-{
-  if (packet == nullptr || packetSize == nullptr)
-  {
-    return txPacketsProcess::ERR_PARAMETERS_NULL;
-  }
-
-  //--------------------------------------------------
-  // Header
-  //--------------------------------------------------
-  packet[0] = txPacketsProcess::BYTE_SYNC;
-  packet[1] = txPacketsProcess::BYTE_START;
-  packet[2] = txPacketsProcess::BYTE_TYPE_DATA;
-  //packet[3] = sequenceNumber;
-
-  unsigned char payloadSize = data.length();
-  if (payloadSize > txPacketsProcess::MAX_DATA_PACKET_SIZE)
-  {
-    payloadSize = txPacketsProcess::MAX_DATA_PACKET_SIZE;
-  }
-  //packet[4] = payloadSize;
-  packet[3] = 0xFF;
-  packet[4] = 0xFF;
-
-  //--------------------------------------------------
-  // Payload handling
-  //--------------------------------------------------
-
-  for (unsigned char i = 0; i < payloadSize; i++)
-  {
-    packet[5 + i] = 0xFF;//(unsigned char)data[i];
-  }
-
-  //--------------------------------------------------
-  // String handling
-  //--------------------------------------------------
-  data.remove(0, payloadSize);
-
-  //--------------------------------------------------
-  // Final packet size = header + payload + CRC + END
-  //--------------------------------------------------
-  *packetSize = 5 + payloadSize + 3; // CRC(2) + END(1)
-
-  //--------------------------------------------------
-  // CRC
-  //--------------------------------------------------
-  unsigned char crcLow = 0;
-  unsigned char crcHigh = 0;
-
-  int result = calculatePacketCRC(packet, 5 + payloadSize, &crcLow, &crcHigh);
-  if (result != 0)
-  {
-      Serial.printf("ERR: txPacketsProcess: createDataPacket: calculatePacketCRC: %i", result);
-      return result;
-  }
-  packet[5 + payloadSize]     = crcHigh;
-  packet[5 + payloadSize + 1] = crcLow;
-
-  //--------------------------------------------------
-  // END byte
-  //--------------------------------------------------
-  packet[5 + payloadSize + 2] = txPacketsProcess::BYTE_END;
-  return 0;
 }
 
 //=========================================================
@@ -291,7 +117,7 @@ namespace txPacketsProcess
     //--------------------------------------------------
     String data = input;
 
-    const size_t MAX_PACKETS_ESTIMATE = (data.length() / MAX_DATA_PACKET_SIZE) + 3; // start + end + safety
+    const size_t MAX_PACKETS_ESTIMATE = (data.length() / packetsInterface::MAX_DATA_PACKET_SIZE) + 3; // start + end + safety
 
     //--------------------------------------------------
     // Storage allocations
@@ -320,9 +146,9 @@ namespace txPacketsProcess
         unsigned char* packet = new unsigned char[9];
         if (!packet) return ERR_OUT_OF_MEMORY;
 
-        int result = createStartPacket(
+        int result = packetsInterface::createStartPacket(
             packet,
-            (data.length() / MAX_DATA_PACKET_SIZE) + 1
+            (data.length() / packetsInterface::MAX_DATA_PACKET_SIZE) + 1
         );
 
         if (result != 0)
@@ -341,12 +167,12 @@ namespace txPacketsProcess
     //--------------------------------------------------
     while (data.length() > 0)
     {
-        unsigned char* packet = new unsigned char[MAX_FULL_PACKET_SIZE];
+        unsigned char* packet = new unsigned char[packetsInterface::MAX_FULL_PACKET_SIZE];
         if (!packet) return ERR_OUT_OF_MEMORY;
 
         unsigned char size = 0;
 
-        int result = createDataPacket(
+        int result = packetsInterface::createDataPacket(
             packet,
             &size,
             data,
@@ -371,7 +197,7 @@ namespace txPacketsProcess
         unsigned char* packet = new unsigned char[9];
         if (!packet) return ERR_OUT_OF_MEMORY;
 
-        int result = createEndPacket(packet, sequenceNumber);
+        int result = packetsInterface::createEndPacket(packet, sequenceNumber);
         if (result != 0)
         {
             delete[] packet;
