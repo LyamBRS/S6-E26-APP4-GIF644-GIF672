@@ -27,21 +27,21 @@ static void manageQueue()
   while (txIndex < packetCount)
   {
     if (aborted) return;
+    if (txManchesterProcess::ready()) {
+      unsigned char* packet = packets[txIndex];
+      size_t size = packetSizes[txIndex];
 
-    unsigned char* packet = packets[txIndex];
-    size_t size = packetSizes[txIndex];
-
-    int result = txManchesterProcess::set(packet, size);
-    
-    if (result == 0)
-    {
-      txIndex++;
+      int result = txManchesterProcess::set(packet, size);
+      
+      if (result == 0)
+      {
+        txIndex++;
+      }
+      else if (result != txManchesterProcess::ERR_BUSY)
+      {
+        Serial.printf("ERR: txPacketsProcess: manageQueue: txManchesterProcess::set: %i\n", result);
+      }
     }
-    else if (result != txManchesterProcess::ERR_BUSY)
-    {
-      Serial.printf("ERR: txPacketsProcess: manageQueue: txManchesterProcess::set: %i\n", result);
-    }
-
     vTaskDelay(pdMS_TO_TICKS(1));
   }
 }
@@ -74,8 +74,10 @@ static int calculatePacketCRC(unsigned char* packet, unsigned char packetSize, u
     }
   }
 
-  *crcLow  = (unsigned char)(crc & 0xFF);
-  *crcHigh = (unsigned char)((crc >> 8) & 0xFF);
+  //*crcLow  = (unsigned char)(crc & 0xFF);
+  //*crcHigh = (unsigned char)((crc >> 8) & 0xFF);
+  *crcLow = 0xFF;
+  *crcHigh = 0xFF;
 
   return 0;
 }
@@ -88,9 +90,11 @@ static int createStartPacket(unsigned char* packet, unsigned char totalPacketAmo
   packet[0] = txPacketsProcess::BYTE_SYNC;
   packet[1] = txPacketsProcess::BYTE_START;
   packet[2] = txPacketsProcess::BYTE_TYPE_START;
-  packet[3] = 0x00;
-  packet[4] = 0x00;
-  packet[5] = totalPacketAmount;
+  //packet[3] = 0x00;
+  //packet[4] = 0x00;
+  packet[3] = 0xFF;
+  packet[4] = 0xFF;
+  packet[5] = 0xFF;//totalPacketAmount;
 
   //--------------------------------------------------
   // CRC
@@ -126,9 +130,11 @@ static int createEndPacket(unsigned char* packet, unsigned char sequenceNumber)
   packet[0] = txPacketsProcess::BYTE_SYNC;
   packet[1] = txPacketsProcess::BYTE_START;
   packet[2] = txPacketsProcess::BYTE_TYPE_END;
-  packet[3] = sequenceNumber;
-  packet[4] = 0x00;
-  packet[5] = 0x00;
+  packet[3] = 0xFF;//sequenceNumber;
+  //packet[4] = 0x00;
+  //packet[5] = 0x00;
+  packet[4] = 0xFF;
+  packet[5] = 0xFF;
 
   //--------------------------------------------------
   // CRC
@@ -163,14 +169,16 @@ static int createDataPacket(unsigned char* packet, unsigned char* packetSize, St
   packet[0] = txPacketsProcess::BYTE_SYNC;
   packet[1] = txPacketsProcess::BYTE_START;
   packet[2] = txPacketsProcess::BYTE_TYPE_DATA;
-  packet[3] = sequenceNumber;
+  //packet[3] = sequenceNumber;
 
   unsigned char payloadSize = data.length();
   if (payloadSize > txPacketsProcess::MAX_DATA_PACKET_SIZE)
   {
     payloadSize = txPacketsProcess::MAX_DATA_PACKET_SIZE;
   }
-  packet[4] = payloadSize;
+  //packet[4] = payloadSize;
+  packet[3] = 0xFF;
+  packet[4] = 0xFF;
 
   //--------------------------------------------------
   // Payload handling
@@ -178,7 +186,7 @@ static int createDataPacket(unsigned char* packet, unsigned char* packetSize, St
 
   for (unsigned char i = 0; i < payloadSize; i++)
   {
-    packet[5 + i] = (unsigned char)data[i];
+    packet[5 + i] = 0xFF;//(unsigned char)data[i];
   }
 
   //--------------------------------------------------
@@ -416,22 +424,19 @@ namespace txPacketsProcess
   {
     while (true)
     {
-      if (aborted)
-      {
-        vTaskDelay(pdMS_TO_TICKS(10));
-        continue;
-      }
-
-      if (packetCount > 0 && txIndex < packetCount)
-      {
-        manageQueue();
-      }
-      else if (packetCount > 0 && txIndex >= packetCount)
-      {
-        transmitting = false;
-      }
-
       vTaskDelay(pdMS_TO_TICKS(PROCESS_TICK));
+      if (!aborted)
+      {
+        if (packetCount > 0 && txIndex < packetCount)
+        {
+          manageQueue();
+        }
+        else if (packetCount > 0 && txIndex >= packetCount)
+        {
+          transmitting = false;
+        }
+
       }
+    }
   }
 }

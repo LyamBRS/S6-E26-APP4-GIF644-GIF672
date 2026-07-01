@@ -19,7 +19,7 @@ namespace txManchesterProcess {
   constexpr int ERR_BUSY = -3;
   constexpr int ERR_BUFFER_OVERFLOW = -4;
 
-  constexpr int PROCESS_TICK = 1;
+  constexpr int PROCESS_SPEED_US = 10;
 
   //=======================================================
   // Public functions
@@ -31,8 +31,7 @@ namespace txManchesterProcess {
   // Add bytes to send as soon as possible.
   int set(const unsigned char* packet, unsigned char byteCount);
 
-  // How many more bits fit in the RX buffer?
-  int getRemainingSpace(void);
+  bool ready(void);
 
   // Stop everything you're currently doing.
   int reset(void);

@@ -56,8 +56,6 @@ void manageQueue()
       if (result != 0) {
         Serial.printf("ERR: txManchesterProcess.cpp: txBitProcess::append: %i", result);
       }
-
-      vTaskDelay(pdMS_TO_TICKS(10));
     }
     else
     {
@@ -105,6 +103,10 @@ namespace txManchesterProcess
     return 0;
   }
 
+  bool ready() {
+    return !txLock;
+  }
+
   int set(const unsigned char* packet, unsigned char byteCount)
   {
     // - Data can't be appended until whole packet is sent.
@@ -148,7 +150,7 @@ namespace txManchesterProcess
         continue;
       }
       manageQueue();
-      vTaskDelay(pdMS_TO_TICKS(PROCESS_TICK));
+      delayMicroseconds(PROCESS_SPEED_US);
     }
 
     Serial.println("FATAL: txManchgesterProcess: while exit.");

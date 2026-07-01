@@ -18,7 +18,7 @@ namespace txBitProcess {
   constexpr int ERR_AMOUNT_TOO_HIGH = -3;
   constexpr int ERR_QUEUE_FULL = -4;
 
-  constexpr int PROCESS_TICK = 1;
+  constexpr int PROCESS_SPEED_US = 50;
 
   //=======================================================
   // Public functions

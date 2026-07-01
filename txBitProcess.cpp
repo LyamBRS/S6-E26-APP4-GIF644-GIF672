@@ -24,7 +24,7 @@ static void processBits(void)
   if (xQueueReceive(bitQueue, &bit, portMAX_DELAY) == pdPASS)
   {
     digitalWrite(txPin, bit);
-    //Serial.print(bit);
+    // Serial.print(bit);
     // arr[count] = bit;
     // count++;
 
@@ -49,7 +49,7 @@ static void processBits(void)
     //     return;
     //   }
     //   Serial.printf(" -> 0x%02X -> %c\n", decoded, decoded);
-    // }
+    //}
   }
 }
 
@@ -129,7 +129,8 @@ namespace txBitProcess
     while (true)
     {
       processBits();
-      vTaskDelay(pdMS_TO_TICKS(PROCESS_TICK));
+      //vTaskDelay(pdMS_TO_TICKS(PROCESS_TICK));
+      delayMicroseconds(PROCESS_SPEED_US);
     }
   }
 }
