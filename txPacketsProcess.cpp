@@ -1,4 +1,4 @@
-#include "transmissionProcess.h"
+#include "txPacketsProcess.h"
 #include "txManchesterProcess.h"
 #include <Arduino.h>
 
@@ -39,7 +39,7 @@ static void manageQueue()
     }
     else if (result != txManchesterProcess::ERR_BUSY)
     {
-      Serial.printf("ERR: transmissionProcess: manageQueue: txManchesterProcess::set: %i\n", result);
+      Serial.printf("ERR: txPacketsProcess: manageQueue: txManchesterProcess::set: %i\n", result);
     }
 
     vTaskDelay(pdMS_TO_TICKS(1));
@@ -50,7 +50,7 @@ static int calculatePacketCRC(unsigned char* packet, unsigned char packetSize, u
 {
   if (packet == nullptr || crcLow == nullptr || crcHigh == nullptr)
   {
-    return transmissionProcess::ERR_PARAMETERS_NULL;
+    return txPacketsProcess::ERR_PARAMETERS_NULL;
   }
 
   Serial.println("A packet is created");
@@ -85,9 +85,9 @@ static int createStartPacket(unsigned char* packet, unsigned char totalPacketAmo
   //--------------------------------------------------
   // Header
   //--------------------------------------------------
-  packet[0] = transmissionProcess::BYTE_SYNC;
-  packet[1] = transmissionProcess::BYTE_START;
-  packet[2] = transmissionProcess::BYTE_TYPE_START;
+  packet[0] = txPacketsProcess::BYTE_SYNC;
+  packet[1] = txPacketsProcess::BYTE_START;
+  packet[2] = txPacketsProcess::BYTE_TYPE_START;
   packet[3] = 0x00;
   packet[4] = 0x00;
   packet[5] = totalPacketAmount;
@@ -99,7 +99,7 @@ static int createStartPacket(unsigned char* packet, unsigned char totalPacketAmo
   unsigned char crcHigh = 0;
   int result = calculatePacketCRC(packet, 5, &crcLow, &crcHigh);
   if (result != 0) {
-    Serial.printf("ERR: transmissionProcess: createStartPacket: calculatePacketCRC: %i", result);
+    Serial.printf("ERR: txPacketsProcess: createStartPacket: calculatePacketCRC: %i", result);
     return result;
   }
 
@@ -109,7 +109,7 @@ static int createStartPacket(unsigned char* packet, unsigned char totalPacketAmo
   //--------------------------------------------------
   // END sequencee
   //--------------------------------------------------
-  packet[8] = transmissionProcess::BYTE_END;
+  packet[8] = txPacketsProcess::BYTE_END;
   return 0;
 }
 
@@ -117,15 +117,15 @@ static int createEndPacket(unsigned char* packet, unsigned char sequenceNumber)
 {
   if (packet == nullptr)
   {
-    return transmissionProcess::ERR_PARAMETERS_NULL;
+    return txPacketsProcess::ERR_PARAMETERS_NULL;
   }
 
   //--------------------------------------------------
   // Header
   //--------------------------------------------------
-  packet[0] = transmissionProcess::BYTE_SYNC;
-  packet[1] = transmissionProcess::BYTE_START;
-  packet[2] = transmissionProcess::BYTE_TYPE_END;
+  packet[0] = txPacketsProcess::BYTE_SYNC;
+  packet[1] = txPacketsProcess::BYTE_START;
+  packet[2] = txPacketsProcess::BYTE_TYPE_END;
   packet[3] = sequenceNumber;
   packet[4] = 0x00;
   packet[5] = 0x00;
@@ -137,7 +137,7 @@ static int createEndPacket(unsigned char* packet, unsigned char sequenceNumber)
   unsigned char crcHigh = 0;
   int result = calculatePacketCRC(packet, 5, &crcLow, &crcHigh);
   if (result != 0) {
-    Serial.printf("ERR: transmissionProcess: createEndPacket: calculatePacketCRC: %i", result);
+    Serial.printf("ERR: txPacketsProcess: createEndPacket: calculatePacketCRC: %i", result);
     return result;
   }
   packet[6] = crcHigh;
@@ -146,7 +146,7 @@ static int createEndPacket(unsigned char* packet, unsigned char sequenceNumber)
   //--------------------------------------------------
   // END sequencee
   //--------------------------------------------------
-  packet[8] = transmissionProcess::BYTE_END;
+  packet[8] = txPacketsProcess::BYTE_END;
   return 0;
 }
 
@@ -154,21 +154,21 @@ static int createDataPacket(unsigned char* packet, unsigned char* packetSize, St
 {
   if (packet == nullptr || packetSize == nullptr)
   {
-    return transmissionProcess::ERR_PARAMETERS_NULL;
+    return txPacketsProcess::ERR_PARAMETERS_NULL;
   }
 
   //--------------------------------------------------
   // Header
   //--------------------------------------------------
-  packet[0] = transmissionProcess::BYTE_SYNC;
-  packet[1] = transmissionProcess::BYTE_START;
-  packet[2] = transmissionProcess::BYTE_TYPE_DATA;
+  packet[0] = txPacketsProcess::BYTE_SYNC;
+  packet[1] = txPacketsProcess::BYTE_START;
+  packet[2] = txPacketsProcess::BYTE_TYPE_DATA;
   packet[3] = sequenceNumber;
 
   unsigned char payloadSize = data.length();
-  if (payloadSize > transmissionProcess::MAX_DATA_PACKET_SIZE)
+  if (payloadSize > txPacketsProcess::MAX_DATA_PACKET_SIZE)
   {
-    payloadSize = transmissionProcess::MAX_DATA_PACKET_SIZE;
+    payloadSize = txPacketsProcess::MAX_DATA_PACKET_SIZE;
   }
   packet[4] = payloadSize;
 
@@ -200,7 +200,7 @@ static int createDataPacket(unsigned char* packet, unsigned char* packetSize, St
   int result = calculatePacketCRC(packet, 5 + payloadSize, &crcLow, &crcHigh);
   if (result != 0)
   {
-      Serial.printf("ERR: transmissionProcess: createDataPacket: calculatePacketCRC: %i", result);
+      Serial.printf("ERR: txPacketsProcess: createDataPacket: calculatePacketCRC: %i", result);
       return result;
   }
   packet[5 + payloadSize]     = crcHigh;
@@ -209,7 +209,7 @@ static int createDataPacket(unsigned char* packet, unsigned char* packetSize, St
   //--------------------------------------------------
   // END byte
   //--------------------------------------------------
-  packet[5 + payloadSize + 2] = transmissionProcess::BYTE_END;
+  packet[5 + payloadSize + 2] = txPacketsProcess::BYTE_END;
   return 0;
 }
 
@@ -217,7 +217,7 @@ static int createDataPacket(unsigned char* packet, unsigned char* packetSize, St
 // Public definitions
 //=========================================================
 
-namespace transmissionProcess
+namespace txPacketsProcess
 {
 
   int initialize(size_t maxPackets)
@@ -321,7 +321,7 @@ namespace transmissionProcess
         {
             delete[] packet;
             transmitting = false;
-            Serial.printf("ERR: transmissionProcess: send: createStartPacket: %i\n", result);
+            Serial.printf("ERR: txPacketsProcess: send: createStartPacket: %i\n", result);
             return result;
         }
 
@@ -349,7 +349,7 @@ namespace transmissionProcess
         {
             delete[] packet;
             transmitting = false;
-            Serial.printf("ERR: transmissionProcess: send: createDataPacket: %i\n", result);
+            Serial.printf("ERR: txPacketsProcess: send: createDataPacket: %i\n", result);
             return result;
         }
 
@@ -368,7 +368,7 @@ namespace transmissionProcess
         {
             delete[] packet;
             transmitting = false;
-            Serial.printf("ERR: transmissionProcess: send: createEndPacket: %i\n", result);
+            Serial.printf("ERR: txPacketsProcess: send: createEndPacket: %i\n", result);
             return result;
         }
 

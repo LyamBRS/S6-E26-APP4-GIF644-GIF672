@@ -1,5 +1,5 @@
-#ifndef TRANSMISSION_PROCESS_H
-#define TRANSMISSION_PROCESS_H
+#ifndef TX_PACKETS_PROCESS_H
+#define TX_PACKETS_PROCESS_H
 
 #include "Arduino.h"
 
@@ -11,7 +11,7 @@
 // - Queueing up packets to send
 ///////////////////////////////////////////////////////////
 
-namespace transmissionProcess {
+namespace txPacketsProcess {
 
   //=======================================================
   // Public definitions

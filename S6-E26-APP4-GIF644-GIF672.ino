@@ -1,7 +1,7 @@
 #include "txBitProcess.h"
 #include "txManchesterProcess.h"
 #include "manchesterInterface.h"
-#include "transmissionProcess.h"
+#include "txPacketsProcess.h"
 //=========================================================
 // Program definitions
 //=========================================================
@@ -13,7 +13,7 @@
 //=========================================================
 TaskHandle_t txBitProcess_TaskHandle = nullptr;
 TaskHandle_t txManchesterProcess_TaskHandle = nullptr;
-TaskHandle_t transmissionProcess_TaskHandle = nullptr;
+TaskHandle_t txPacketsProcess_TaskHandle = nullptr;
 
 //=========================================================
 // Private variables
@@ -43,9 +43,9 @@ void setup() {
     return;
   }
 
-  result = transmissionProcess::initialize(10);
+  result = txPacketsProcess::initialize(10);
   if (result != 0) {
-    Serial.printf("ERR: setup(): transmissionProcess::initialize: %i", result);
+    Serial.printf("ERR: setup(): txPacketsProcess::initialize: %i", result);
     return;
   }
 
@@ -71,12 +71,12 @@ void setup() {
   );
 
   xTaskCreate(
-    transmissionProcess::handle,
-    "transmissionProcess",
+    txPacketsProcess::handle,
+    "txPacketsProcess",
     4096,
     nullptr,
     3,
-    &transmissionProcess_TaskHandle
+    &txPacketsProcess_TaskHandle
   );
 
   //-------------------------------------------------------
@@ -88,9 +88,9 @@ void setup() {
   String test = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ aaaaaaaaaaaaaaaaaaaaaaaa";
   //String test = "among";
   
-  result = transmissionProcess::send(test);
+  result = txPacketsProcess::send(test);
   if (result != 0) {
-    Serial.printf("ERR: setup(): transmissionProcess::set: %i", result);
+    Serial.printf("ERR: setup(): txPacketsProcess::set: %i", result);
   }
 }
 
