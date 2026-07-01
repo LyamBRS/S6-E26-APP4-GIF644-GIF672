@@ -36,7 +36,6 @@ static void manageQueue()
     if (result == 0)
     {
       txIndex++;
-      Serial.println("Packet was given to packager");
     }
     else if (result != txManchesterProcess::ERR_BUSY)
     {

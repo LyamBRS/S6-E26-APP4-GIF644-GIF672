@@ -19,7 +19,7 @@ namespace txManchesterProcess {
   constexpr int ERR_BUSY = -3;
   constexpr int ERR_BUFFER_OVERFLOW = -4;
 
-  constexpr int PROCESS_TICK = 100;
+  constexpr int PROCESS_TICK = 1;
 
   //=======================================================
   // Public functions

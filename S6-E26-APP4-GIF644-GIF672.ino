@@ -85,8 +85,8 @@ void setup() {
   Serial.println("Initialization finished");
 
   delay(2000);
-  //String test = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ aaaaaaaaaaaaaaaaaaaaaaaa";
-  String test = "among";
+  String test = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ aaaaaaaaaaaaaaaaaaaaaaaa";
+  //String test = "among";
   
   result = transmissionProcess::send(test);
   if (result != 0) {

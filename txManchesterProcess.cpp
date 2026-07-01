@@ -12,6 +12,15 @@ static SemaphoreHandle_t readySemaphore = nullptr;
 static volatile bool aborted = false;
 static bool txLock = false;
 
+
+void printBinary8(uint8_t x)
+{
+    for (int i = 7; i >= 0; i--)
+    {
+        Serial.print((x >> i) & 1);
+    }
+}
+
 //=========================================================
 // Private function
 //=========================================================
@@ -26,10 +35,15 @@ void manageQueue()
 
     if (xQueueReceive(txQueue, &byte, portMAX_DELAY) == pdPASS)
     {
-      Serial.printf("Queuing -> 0x%02X\n", byte);
       unsigned char high = 0;
       unsigned char low = 0;
       int result = manchesterInterface::fromUnsignedChar(byte, &low, &high);
+      // Serial.printf("Queuing -> 0x%02X ->", byte);
+      // printBinary8(high);
+      // printBinary8(low);
+      // Serial.print(" -> ");
+
+
       if (result != 0) {
         Serial.printf("ERR: txManchesterProcess.cpp: manchesterInterface::fromUnsignedChar: %i", result);
       }
