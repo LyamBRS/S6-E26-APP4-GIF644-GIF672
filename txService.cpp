@@ -1,6 +1,7 @@
 #include "txService.h"
 #include "Arduino.h"
 #include "txPacketsProcess.h"
+#include "sensorService.h"
 
 //=========================================================
 // Private variables
@@ -34,7 +35,7 @@ namespace txService
   int state_awaitSensors(void)
   {
     // TODO: READY LOGIC
-    sensorData = "TODO BOZO";
+    sensorData = sensorService::get();
     currentState = state_queueTransmission;
     return 0;
   }
